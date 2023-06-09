@@ -9,7 +9,7 @@ public class Menu {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String type;
+    private MenuType menuType;
     private int price;
 
     private String imageName;   //  이미지 저장 타입
