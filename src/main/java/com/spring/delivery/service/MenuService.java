@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class MenuService {
     private final MenuRepository menuRepository;
 
-    public Menu createMenu(Menu menu){
+    public Menu create(Menu menu){
         return menuRepository.save(menu);
     }
 }
