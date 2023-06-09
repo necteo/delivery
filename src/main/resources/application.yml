@@ -1,0 +1,34 @@
+loggin:
+  level:
+    root: info
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: none
+        secure: true
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      maxFileSize: 200MB
+      maxRequestSize: 100MB
+  messages:
+    basename: errors
+  output:
+    ansi:
+      enabled: always
+  datasource:
+    #    url: jdbc:h2:~/joinus
+    url: jdbc:h2:tcp://localhost/~/joinus
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
