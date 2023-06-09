@@ -10,14 +10,19 @@ public class Menu {
     private Long id;
     private String name;
     private MenuType menuType;
+    private DiscountPolicy discountPolicy;
     private int price;
 
     private String imageName;   //  이미지 저장 타입
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name="STORE_ID")
     private Store store;
 
     @OneToOne
     private Statistics statistics;
+
+    @OneToOne(mappedBy = "menu")
+    private OrderItem orderItem;
+
 }

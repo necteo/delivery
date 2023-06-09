@@ -1,6 +1,5 @@
 package com.spring.delivery.domain;
 
-import com.spring.delivery.domain.discount.DiscountPolicy;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,16 +15,13 @@ public class Store {
     private String name;
     @Embedded
     private Address address;
-    private int number;
+    private String phoneNum;
     private String runTime;
-
-    @Transient
-    private DiscountPolicy discountPolicy;
 
     @OneToMany(mappedBy="store", cascade = CascadeType.ALL)
     private List<Menu> menus = new ArrayList<>();
 
     @OneToOne
-    @JoinColumn(name = "STORE_ID")
+    @JoinColumn(name = "USER_ID")
     private User user;
 }
