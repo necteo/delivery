@@ -1,17 +1,27 @@
-package com.spring.delivery.config;
+package com.spring.delivery.config.security;
 
+import com.spring.delivery.oauth.repository.user.UserRefreshTokenRepository;
+import com.spring.delivery.config.properties.AppProperties;
 import com.spring.delivery.config.properties.CorsProperties;
-import com.spring.delivery.oauth.exception.CustomAuthenticationEntryPoint;
-import com.spring.delivery.oauth.filter.JwtAuthenticationFilter;
-import com.spring.delivery.oauth.handler.CustomAccessDeniedHandler;
-import com.spring.delivery.oauth.token.JwtProvider;
+import com.spring.delivery.domain.RoleType;
+import com.spring.delivery.oauth.exception.RestAuthenticationEntryPoint;
+import com.spring.delivery.oauth.filter.TokenAuthenticationFilter;
+import com.spring.delivery.oauth.handler.OAuth2AuthenticationFailureHandler;
+import com.spring.delivery.oauth.handler.OAuth2AuthenticationSuccessHandler;
+import com.spring.delivery.oauth.handler.TokenAccessDeniedHandler;
+import com.spring.delivery.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
+import com.spring.delivery.oauth.service.CustomOAuth2UserService;
+import com.spring.delivery.oauth.token.AuthTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -25,49 +35,125 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtProvider jwtProvider;
-    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
-    private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private final CorsProperties corsProperties;
+    private final AppProperties appProperties;
+    private final AuthTokenProvider tokenProvider;
+    private final CustomOAuth2UserService oAuth2UserService;
+    private final TokenAccessDeniedHandler tokenAccessDeniedHandler;
+    private final UserRefreshTokenRepository userRefreshTokenRepository;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .httpBasic().disable()
-                .formLogin().disable()
-                .headers()
-                .frameOptions()
-                .sameOrigin()
-                .and()
-                .cors() // CORS 에러 방지용
-
-                // 세션을 사용하지 않을거라 세션 설정을 Stateless 로 설정
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .cors()
                 .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 
                 .and()
-                .oauth2Login()
+                .csrf().disable()
+                .formLogin().disable()
+                .httpBasic().disable()
+                .exceptionHandling()
+                .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                .accessDeniedHandler(tokenAccessDeniedHandler)
 
-                // 접근 권한 설정부
                 .and()
                 .authorizeHttpRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
-                .requestMatchers(HttpMethod.OPTIONS).permitAll() // CORS Preflight 방지
-                .requestMatchers("/", "/h2-console/**", "/user/login/**").permitAll()
+                .requestMatchers("/api/customer/**").hasAnyAuthority(RoleType.CUSTOMER.getCode())
+                .requestMatchers("/api/manager/**").hasAnyAuthority(RoleType.MANAGER.getCode())
                 .anyRequest().authenticated()
 
-                // JWT 토큰 예외처리부
                 .and()
-                .exceptionHandling()
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-                .accessDeniedHandler(customAccessDeniedHandler)
+                .oauth2Login()
+                .authorizationEndpoint()
+                .baseUri("/oauth2/authorization")
+                .authorizationRequestRepository(oAuth2AuthorizationRequestBasedOnCookieRepository())
+
                 .and()
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class);
+                .redirectionEndpoint()
+                .baseUri("/login/oauth2/code/*")
+
+                .and()
+                .userInfoEndpoint()
+                .userService(oAuth2UserService)
+
+                .and()
+                .successHandler(oAuth2AuthenticationSuccessHandler())
+                .failureHandler(oAuth2AuthenticationFailureHandler())
+
+                .and()
+                .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
+    /*
+     * UserDetailsService 설정
+     * */
+    @Bean
+    protected AuthenticationManager authenticationManager(
+            HttpSecurity http,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            UserDetailsService userDetailsService
+    ) throws Exception {
+        return http
+                .getSharedObject(AuthenticationManagerBuilder.class)
+                .userDetailsService(userDetailsService)
+                .passwordEncoder(bCryptPasswordEncoder)
+                .and().build();
+    }
 
+    /*
+     * security 설정 시, 사용할 인코더 설정
+     * */
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    /*
+     * 토큰 필터 설정
+     * */
+    @Bean
+    public TokenAuthenticationFilter tokenAuthenticationFilter() {
+        return new TokenAuthenticationFilter(tokenProvider);
+    }
+
+    /*
+     * 쿠키 기반 인가 Repository
+     * 인가 응답을 연계 하고 검증할 때 사용.
+     * */
+    @Bean
+    public OAuth2AuthorizationRequestBasedOnCookieRepository oAuth2AuthorizationRequestBasedOnCookieRepository() {
+        return new OAuth2AuthorizationRequestBasedOnCookieRepository();
+    }
+
+    /*
+     * Oauth 인증 성공 핸들러
+     * */
+    @Bean
+    public OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
+        return new OAuth2AuthenticationSuccessHandler(
+                tokenProvider,
+                appProperties,
+                userRefreshTokenRepository,
+                oAuth2AuthorizationRequestBasedOnCookieRepository()
+        );
+    }
+
+    /*
+     * Oauth 인증 실패 핸들러
+     * */
+    @Bean
+    public OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler() {
+        return new OAuth2AuthenticationFailureHandler(oAuth2AuthorizationRequestBasedOnCookieRepository());
+    }
+
+    /*
+     * Cors 설정
+     * */
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         UrlBasedCorsConfigurationSource corsConfigSource = new UrlBasedCorsConfigurationSource();

@@ -1,8 +1,8 @@
-package com.spring.delivery.api.controller.auth;
+package com.spring.delivery.oauth.controller;
 
-import com.spring.delivery.api.entity.auth.AuthReqModel;
-import com.spring.delivery.api.entity.user.UserRefreshToken;
-import com.spring.delivery.api.repository.user.UserRefreshTokenRepository;
+import com.spring.delivery.oauth.entity.auth.AuthReqModel;
+import com.spring.delivery.oauth.entity.user.UserRefreshToken;
+import com.spring.delivery.oauth.repository.user.UserRefreshTokenRepository;
 import com.spring.delivery.common.ApiResponse;
 import com.spring.delivery.config.properties.AppProperties;
 import com.spring.delivery.domain.RoleType;
@@ -38,7 +38,7 @@ public class AuthController {
     private final static String REFRESH_TOKEN = "refresh_token";
 
     @PostMapping("/login")
-    public ApiResponse login(
+    public ApiResponse<String> login(
             HttpServletRequest request,
             HttpServletResponse response,
             @RequestBody AuthReqModel authReqModel
@@ -85,7 +85,7 @@ public class AuthController {
     }
 
     @GetMapping("/refresh")
-    public ApiResponse refreshToken (HttpServletRequest request, HttpServletResponse response) {
+    public ApiResponse<String> refreshToken (HttpServletRequest request, HttpServletResponse response) {
         // access token 확인
         String accessToken = HeaderUtil.getAccessToken(request);
         AuthToken authToken = tokenProvider.convertAuthToken(accessToken);

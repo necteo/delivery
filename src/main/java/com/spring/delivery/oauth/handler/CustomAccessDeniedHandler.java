@@ -1,4 +1,4 @@
-package com.spring.delivery.handler;
+package com.spring.delivery.oauth.handler;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

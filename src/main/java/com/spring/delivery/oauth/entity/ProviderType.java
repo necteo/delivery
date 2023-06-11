@@ -1,4 +1,10 @@
 package com.spring.delivery.oauth.entity;
 
-public enum Provider {
+import lombok.Getter;
+
+@Getter
+public enum ProviderType {
+    GOOGLE,
+    GITHUB,
+    LOCAL
 }

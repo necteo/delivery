@@ -1,6 +1,6 @@
-package com.spring.delivery.api.repository.user;
+package com.spring.delivery.oauth.repository.user;
 
-import com.spring.delivery.api.entity.user.UserRefreshToken;
+import com.spring.delivery.oauth.entity.user.UserRefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

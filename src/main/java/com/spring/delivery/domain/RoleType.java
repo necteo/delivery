@@ -1,4 +1,4 @@
-package com.spring.delivery.oauth.entity;
+package com.spring.delivery.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,8 +8,8 @@ import java.util.Arrays;
 @Getter
 @AllArgsConstructor
 public enum RoleType {
-    USER("ROLE_USER", "일반 사용자 권한"),
-    ADMIN("ROLE_ADMIN", "관리자 권한"),
+    CUSTOMER("ROLE_CUSTOMER", "일반 사용자 권한"),
+    MANAGER("ROLE_MANAGER", "관리자 권한"),
     GUEST("GUEST", "게스트 권한");
 
     private final String code;

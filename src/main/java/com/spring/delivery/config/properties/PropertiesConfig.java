@@ -1,11 +1,10 @@
-package com.spring.delivery.config;
+package com.spring.delivery.config.properties;
 
-import com.spring.delivery.config.properties.AppProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class AppConfig {
+public class PropertiesConfig {
 
     @Bean
     public AppProperties appProperties() {

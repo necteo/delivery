@@ -1,4 +1,4 @@
-package com.spring.delivery.api.entity.auth;
+package com.spring.delivery.oauth.entity.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

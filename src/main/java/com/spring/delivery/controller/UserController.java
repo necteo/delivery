@@ -1,7 +1,7 @@
-package com.spring.delivery.api.controller.user;
+package com.spring.delivery.controller;
 
 import com.spring.delivery.domain.User;
-import com.spring.delivery.api.service.UserService;
+import com.spring.delivery.service.UserService;
 import com.spring.delivery.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;

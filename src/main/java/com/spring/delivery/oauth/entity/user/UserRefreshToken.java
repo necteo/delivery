@@ -1,4 +1,4 @@
-package com.spring.delivery.api.entity.user;
+package com.spring.delivery.oauth.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
