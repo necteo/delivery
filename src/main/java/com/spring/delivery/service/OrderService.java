@@ -178,7 +178,7 @@ public class OrderService {
             if (order.getStatus().equals(OrderStatus.CANCELLED))
                 orderState = "취소";
             else if (order.getStatus().equals(OrderStatus.DELIVERY))
-                orderState = "배달";
+                orderState = "배달중";
             else if (order.getStatus().equals(OrderStatus.COMPLETED))
                 orderState = "완료";
             OrderDTO orderDTO = new OrderDTO();
@@ -211,7 +211,7 @@ public class OrderService {
             if (order.getStatus().equals(OrderStatus.CANCELLED))
                 orderState = "취소";
             else if (order.getStatus().equals(OrderStatus.DELIVERY))
-                orderState = "배달";
+                orderState = "배달중";
             else if (order.getStatus().equals(OrderStatus.COMPLETED))
                 orderState = "완료";
             OrderDTO orderDTO = new OrderDTO();
@@ -239,7 +239,8 @@ public class OrderService {
 
     public SocketMessageForm acceptOrder(OrderDTO orderDTO){
         Long orderId = orderDTO.getOrderId();
-        Order order1 = orderRepository.findById(orderId).get();
+        Order order1 = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("order doesn't exist"));
         User user = order1.getUser();
         Long userId = orderDTO.getUserId();
         String userEmail = user.getEmail();

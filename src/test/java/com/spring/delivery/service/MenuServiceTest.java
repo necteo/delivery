@@ -23,7 +23,7 @@ class MenuServiceTest {
     void create() {
         MenuRegisterDTO menuRegisterDTO = new MenuRegisterDTO(
                 "싸이플렉스버거",
-                MenuType.MAIN.toString().toLowerCase(),
+                MenuType.MAIN.name().toLowerCase(),
                 7000,
                 "이 햄버거는 무척 맛있다",
                 "image001",
@@ -41,7 +41,7 @@ class MenuServiceTest {
     void createAfter() {
         MenuRegisterDTO menuRegisterDTO = new MenuRegisterDTO(
                 "싸이플렉스버거",
-                MenuType.MAIN.toString().toLowerCase(),
+                MenuType.MAIN.name().toLowerCase(),
                 7000,
                 "이 햄버거는 무척 맛있다",
                 "image001",
@@ -78,7 +78,7 @@ class MenuServiceTest {
     void applyMenuPolicy() {
         MenuRegisterDTO menuRegisterDTO = new MenuRegisterDTO(
                 "마라싸이버거",
-                MenuType.MAIN.toString(),
+                MenuType.MAIN.name(),
                 7000,
                 "이 햄버거는 무척 맛있다",
                 "image001",
