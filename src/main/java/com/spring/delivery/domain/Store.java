@@ -16,7 +16,8 @@ public class Store {
     @Embedded
     private Address address;
     private String phoneNum;
-    private String runTime;
+    private int openTime;
+    private int closedTime;
 
     @OneToMany(mappedBy="store", cascade = CascadeType.ALL)
     private List<Menu> menus = new ArrayList<>();

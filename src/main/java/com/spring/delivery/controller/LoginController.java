@@ -1,14 +1,19 @@
 package com.spring.delivery.controller;
 
+import com.spring.delivery.domain.User;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class LoginController {
-    private final SimpMessageSendingOperations messagingTemplate;
+//    private final SimpMessageSendingOperations messagingTemplate;
 
 //    @PostMapping("/login")
 //    public void login(@Validated @RequestBody LoginForm loginForm, BindingResult bindingResult, HttpServletRequest request){

@@ -14,6 +14,8 @@ public class OrderItem {
     @JoinColumn(name="MENU_ID")
     private Menu menu;
 
+    private int quantity;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name="ORDER_ID")
     private Order order;

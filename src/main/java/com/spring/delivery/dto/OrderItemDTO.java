@@ -5,5 +5,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class MenuDTO {
+public class OrderItemDTO {
+    private Long storeId = 1L;
+    private Long menuId;
+    private int quantity;
 }

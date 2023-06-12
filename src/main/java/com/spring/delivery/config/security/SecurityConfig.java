@@ -60,6 +60,7 @@ public class SecurityConfig {
 
                 .and()
                 .authorizeHttpRequests()
+                .requestMatchers("/webSocket/**").permitAll()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 .requestMatchers("/api/customer/**").hasAnyAuthority(RoleType.CUSTOMER.getCode())
                 .requestMatchers("/api/manager/**").hasAnyAuthority(RoleType.MANAGER.getCode())
