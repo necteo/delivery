@@ -1,0 +1,71 @@
+loggin:
+  level:
+    org.hibernate.type: trace
+    root: info
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: none
+        secure: true
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      maxFileSize: 200MB
+      maxRequestSize: 100MB
+  messages:
+    basename: errors
+  output:
+    ansi:
+      enabled: always
+  datasource:
+    url: jdbc:h2:tcp://localhost/~/goweb
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    properties:
+      hibernate:
+        dialect:
+        show_sql: true
+        format_sql: true
+  # Security OAuth
+  security:
+    oauth2.client:
+      registration:
+        google:
+          client_id: 734925769946-5ago02tf2qbadsom09g4ttms6gu3gtbl.apps.googleusercontent.com
+          client_secret: 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
+          scope:
+            - email
+            - profile
+        github:
+          client_id: 562c67013679d24db698
+          client_secret: d70f764d2df048e5e955404c193134bbe9f3078e
+
+  # jwt secret key 설정
+jwt:
+  secret: '8sknjlO3NPTBqo319DHLNqsQAfRJEdKsETOds'
+
+
+# cors 설정
+cors:
+  allowed-origins: 'http://localhost:3000'
+  allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+  allowed-headers: '*'
+  max-age: 3600
+
+
+# 토큰 관련 secret Key 및 RedirectUri 설정
+app:
+  auth:
+    tokenSecret: 926D96C90030DD58429D2751AC1BDBBC
+    tokenExpiry: 1800000
+    refreshTokenExpiry: 604800000
+  oauth2:
+    authorizedRedirectUris:
+      - http://localhost:3000/oauth/redirect
