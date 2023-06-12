@@ -6,22 +6,18 @@ import com.spring.delivery.dto.OrderDTO;
 import com.spring.delivery.dto.OrderItemDTO;
 import com.spring.delivery.dto.SocketMessageForm;
 import com.spring.delivery.oauth.entity.ProviderType;
-import com.spring.delivery.repository.MenuRepository;
-import com.spring.delivery.repository.OrderRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Order;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Slf4j
@@ -35,13 +31,14 @@ class OrderServiceTest {
     MenuService menuService;
 
     @Test
+    @DisplayName("운영 시간 예외 처리")
     @Transactional
     @Order(1)
     void createNotTime() {
-        customerBefore();
+        Long userId = customerBefore("email");
         List<OrderItemDTO> itemDTOList = new ArrayList<>();
         OrderDTO orderDTO = OrderDTO.builder()
-                .userId(1L)
+                .userId(userId)
                 .state(OrderStatus.ORDER.name())
                 .orderItem(itemDTOList)
                 .totalPrice(9000)
@@ -51,19 +48,20 @@ class OrderServiceTest {
         SocketMessageForm messageForm = orderService.create(orderDTO);
 
         assertThat(messageForm.getMessage())
-                .as("가게 운영시간이 9~18시 이므로 가게 운영 시간이 아닙니다.")
+                .as("운영 시간이 아닌 시점에서 장바구니 담기 예외가 발생해야함")
                 .isEqualTo("가게 운영 시간이 아닙니다.");
     }
 
     @Test
+    @DisplayName("주메뉴 없는 주문 예외 처리")
     @Transactional
     @Order(2)
     void createNoMain() {
-        customerBefore();
+        Long userId = customerBefore("email");
         List<OrderItemDTO> itemDTOList = new ArrayList<>();
         itemDTOList.add(new OrderItemDTO(menuService.findMenuInfo("콜라").getId(), 3));
         OrderDTO orderDTO = OrderDTO.builder()
-                .userId(2L)
+                .userId(userId)
                 .orderItem(itemDTOList)
                 .totalPrice(9000)
                 .storeId(1L)
@@ -72,18 +70,19 @@ class OrderServiceTest {
         SocketMessageForm messageForm = orderService.create(orderDTO);
 
         assertThat(messageForm.getMessage())
-                .as("주 메뉴가 없으면 주문이 불가능")
+                .as("장바구니에 주메뉴가 없는 상태에서 주문을 시도할 경우 예외가 발생해야함")
                 .isEqualTo("사이드 메뉴 만으로는 주문이 불가능합니다.");
     }
 
     @Test
+    @DisplayName("주문 총 가격 미달 예외 처리")
     @Transactional
     @Order(3)
     void createLessPrice() {
-        customerBefore();
+        Long userId = customerBefore("email");
         List<OrderItemDTO> itemDTOList = new ArrayList<>();
         OrderDTO orderDTO = OrderDTO.builder()
-                .userId(3L)
+                .userId(userId)
                 .orderItem(itemDTOList)
                 .totalPrice(5000)
                 .storeId(1L)
@@ -92,18 +91,19 @@ class OrderServiceTest {
         SocketMessageForm messageForm = orderService.create(orderDTO);
 
         assertThat(messageForm.getMessage())
-                .as("주문 금액이 6000원 미만이어야 함")
+                .as("주문 총 가격이 6000원 미만일 경우 예외가 발생해야함")
                 .isEqualTo("최소 주문 금액 6000원을 넘어야 주문이 가능합니다.");
     }
 
     @Test
+    @DisplayName("주문 최초 상태 확인")
     @Order(4)
     void create() {
-        customerBefore();
+        Long userId = customerBefore("email");
         List<OrderItemDTO> itemDTOList = new ArrayList<>();
         itemDTOList.add(new OrderItemDTO(menuService.findMenuInfo("싸이플렉스버거").getId(), 2));
         OrderDTO orderDTO = OrderDTO.builder()
-                .userId(4L)
+                .userId(userId)
                 .orderItem(itemDTOList)
                 .totalPrice(14000)
                 .storeId(1L)
@@ -117,70 +117,89 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("주문 상태에서 배달중 상태로")
     @Order(5)
     void acceptOrder() {
-        managerBefore();
-
         assertThat(orderService.findAllOrdersByUserId(4L).get(0).getState())
-                .as("점주는 상태가 “주문”인 주문에 대해 접수가 가능하고 상태가 “배달중”으로 변경되는가?")
+                .as("점주는 상태가 “주문”인 주문에 대해 접수가 가능하고 상태가 “배달중”으로 변경되어야 함")
                 .isEqualTo("주문");
 
         SocketMessageForm messageForm =
                 orderService.acceptOrder(OrderDTO.builder().orderId(1L).userId(4L).build());
 
         assertThat(orderService.findAllOrdersByUserId(messageForm.getUserId()).get(0).getState())
-                .as("점주는 상태가 “주문”인 주문에 대해 접수가 가능하고 상태가 “배달중”으로 변경되는가?")
+                .as("점주는 상태가 “주문”인 주문에 대해 접수가 가능하고 상태가 “배달중”으로 변경되어야 함")
                 .isEqualTo("배달중");
     }
 
     @Test
+    @DisplayName("배달중 상태 주문 취소 예외 처리")
     @Order(6)
     void cancel() {
-//        customerBefore();
         SocketMessageForm messageForm =
                 orderService.cancel(OrderDTO.builder().orderId(1L).userId(4L).build());
 
         assertThat(messageForm.getMessage())
-                .as("상태가 “배달중”인 주문에 대해 취소가 불가한가?")
+                .as("상태가 “배달중”인 주문에 대해 취소가 불가해야함")
                 .isEqualTo("배달중인 주문은 취소가 불가능합니다.");
     }
 
     @Test
+    @DisplayName("배달완료시 완료 상태로")
     @Transactional
     @Order(7)
     void setOrderDelivered() {
-//        managerBefore();
         SocketMessageForm messageForm =
                 orderService.setOrderDelivered(OrderDTO.builder().orderId(1L).userId(4L).build());
 
         assertThat(orderService.findAllOrdersByUserId(messageForm.getUserId()).get(0).getState())
-                .as("점주가 배달완료를 수행하면 해당 주문의 상태가 “완료”로 변경되는가?")
+                .as("점주가 배달완료를 수행하면 해당 주문의 상태가 “완료”로 변경되어야 함")
                 .isEqualTo("완료");
     }
 
     @Test
+    @Disabled
+    @DisplayName("주문 금액 할인 정책 적용 확인")
+    @Transactional
     @Order(8)
     void findAllOrdersByUserId() {
-        customerBefore();
+        Long userId = customerBefore("email3");
     }
 
     @Test
+    @Disabled
+    @DisplayName("1분간 미접수 시 자동 취소 확인")
     @Transactional
     @Order(9)
-    void denyOrder() {
-        managerBefore();
-        orderService.init();
+    void denyOrder() throws Exception {
+        Long userId = customerBefore("email4");
+        List<OrderItemDTO> itemDTOList = new ArrayList<>();
+        itemDTOList.add(new OrderItemDTO(menuService.findMenuInfo("싸이플렉스버거").getId(), 2));
+        OrderDTO orderDTO = OrderDTO.builder()
+                .userId(userId)
+                .orderItem(itemDTOList)
+                .totalPrice(14000)
+                .storeId(1L)
+                .currentHour(12)
+                .build();
+        SocketMessageForm messageForm = orderService.create(orderDTO);
+
+        sleep(61000);
+
+        assertThat(orderService.findAllOrdersByUserId(userId).get(0).getState())
+                .as("주문 이후 1분 안에 점주가 접수하지 않으면 해당 주문은 자동 취소되어야 함")
+                .isEqualTo("취소");
     }
 
-    void customerBefore() {
+    Long customerBefore(String email) {
         User user = User.builder()
                 .username("kim")
-                .email("email")
+                .email(email)
                 .roleType(RoleType.CUSTOMER)
                 .emailVerifiedYn("Y")
                 .providerType(ProviderType.GOOGLE)
                 .build();
-        userService.register(user);
+        Long userId = userService.register(user).getId();
         MenuRegisterDTO menuRegisterDTO = new MenuRegisterDTO(
                 "콜라",
                 MenuType.SIDE.name().toUpperCase(),
@@ -208,17 +227,6 @@ class OrderServiceTest {
                 1L
         );
         menuService.create(menuRegisterDTO);
+        return userId;
     }
-
-    void managerBefore() {
-        User user = User.builder()
-                .username("kim")
-                .email("email2")
-                .roleType(RoleType.MANAGER)
-                .emailVerifiedYn("Y")
-                .providerType(ProviderType.GOOGLE)
-                .build();
-        userService.register(user);
-    }
-
 }

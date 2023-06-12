@@ -90,7 +90,7 @@ class MenuServiceTest {
         Long menuId = menuService.applyMenuPolicy(menuDiscountPolicyDTO);
 
         assertThat(menuService.findMenuInfo(menuId).getName())
-                .as("수정 된 버거랑 이름이 같아야함")
+                .as("할인 정책이 수정 된 버거와 이름이 같아야함")
                 .isEqualTo("마라싸이버거");
     }
 }
