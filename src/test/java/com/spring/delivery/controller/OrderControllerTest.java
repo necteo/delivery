@@ -10,18 +10,28 @@ import com.spring.delivery.dto.OrderItemDTO;
 import com.spring.delivery.oauth.entity.ProviderType;
 import com.spring.delivery.service.MenuService;
 import com.spring.delivery.service.OrderService;
+import com.spring.delivery.service.StoreService;
 import com.spring.delivery.service.UserService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,22 +42,31 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AllArgsConstructor
-@ComponentScan
-@WebMvcTest(OrderControllerTest.class)
+@SpringBootTest
 @Slf4j
 class OrderControllerTest {
+    @Autowired
+    OrderController orderController;
     MockMvc mockMvc;
+    @Autowired
     UserService userService;
+    @Autowired
     MenuService menuService;
-    @MockBean
+    @Autowired
     OrderService orderService;
+
+    @BeforeEach
+    void setup() {
+        mockMvc = MockMvcBuilders.standaloneSetup(orderController).build();
+    }
 
     @Test
     @WithMockUser
     void denyOrder() throws Exception {
+        orderService.init();
         User user = User.builder()
                 .username("kim")
                 .email("email")
@@ -93,17 +112,14 @@ class OrderControllerTest {
                 .currentHour(12)
                 .build();
 
-        given(orderService.create(orderDTO).getMessage()).willReturn("주문 접수가 완료되었습니다.");
+//        orderService.create(orderDTO);
         String content = new ObjectMapper().writeValueAsString(orderDTO);
 
-        ResultActions resultActions = mockMvc.perform(
-                post("/order/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(content)
-                        .with(csrf())
-        );
-        mockMvc.perform(
-                get("httpstat.us/200?sleep=70000")
+        RestTemplate restTemplate = new RestTemplate();
+
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "https://httpstat.us/200?sleep=70000",
+                String.class
         );
 
         assertThat(orderService.findAllOrdersByUserId(userId).get(0).getState())

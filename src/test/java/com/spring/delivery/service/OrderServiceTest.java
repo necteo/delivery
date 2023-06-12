@@ -12,6 +12,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +119,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("주문 상태에서 배달중 상태로")
+//    @DisplayName("주문 상태에서 배달중 상태로")
     @Order(5)
     void acceptOrder() {
         assertThat(orderService.findAllOrdersByUserId(4L).get(0).getState())
@@ -133,7 +135,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("배달중 상태 주문 취소 예외 처리")
+//    @DisplayName("배달중 상태 주문 취소 예외 처리")
     @Order(6)
     void cancel() {
         SocketMessageForm messageForm =
@@ -145,7 +147,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("배달완료시 완료 상태로")
+//    @DisplayName("배달완료시 완료 상태로")
     @Transactional
     @Order(7)
     void setOrderDelivered() {
@@ -167,14 +169,30 @@ class OrderServiceTest {
     }
 
     @Test
-    @Disabled
-    @DisplayName("1분간 미접수 시 자동 취소 확인")
+//    @Disabled
+//    @DisplayName("1분간 미접수 시 자동 취소 확인")
     @Transactional
     @Order(9)
     void denyOrder() throws Exception {
-        Long userId = customerBefore("email4");
+        User user = User.builder()
+                .username("kim")
+                .email("email4")
+                .roleType(RoleType.CUSTOMER)
+                .emailVerifiedYn("Y")
+                .providerType(ProviderType.GOOGLE)
+                .build();
+        Long userId = userService.register(user).getId();
+        MenuRegisterDTO menuRegisterDTO = new MenuRegisterDTO(
+                "싸이버거",
+                MenuType.MAIN.name().toLowerCase(),
+                7000,
+                "이 햄버거는 무척 맛있다",
+                "image001",
+                1L
+        );
+        menuService.create(menuRegisterDTO);
         List<OrderItemDTO> itemDTOList = new ArrayList<>();
-        itemDTOList.add(new OrderItemDTO(menuService.findMenuInfo("싸이플렉스버거").getId(), 2));
+        itemDTOList.add(new OrderItemDTO(menuService.findMenuInfo("싸이버거").getId(), 2));
         OrderDTO orderDTO = OrderDTO.builder()
                 .userId(userId)
                 .orderItem(itemDTOList)
@@ -184,7 +202,11 @@ class OrderServiceTest {
                 .build();
         SocketMessageForm messageForm = orderService.create(orderDTO);
 
-        sleep(61000);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity(
+                "https://httpstat.us/200?sleep=62000",
+                String.class
+        );
 
         assertThat(orderService.findAllOrdersByUserId(userId).get(0).getState())
                 .as("주문 이후 1분 안에 점주가 접수하지 않으면 해당 주문은 자동 취소되어야 함")
