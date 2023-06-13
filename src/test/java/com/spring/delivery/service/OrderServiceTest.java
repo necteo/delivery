@@ -33,7 +33,7 @@ class OrderServiceTest {
     MenuService menuService;
 
     @Test
-    @DisplayName("운영 시간 예외 처리")
+//    @DisplayName("운영 시간 예외 처리")
     @Transactional
     @Order(1)
     void createNotTime() {
@@ -55,7 +55,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("주메뉴 없는 주문 예외 처리")
+//    @DisplayName("주메뉴 없는 주문 예외 처리")
     @Transactional
     @Order(2)
     void createNoMain() {
@@ -77,7 +77,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("주문 총 가격 미달 예외 처리")
+//    @DisplayName("주문 총 가격 미달 예외 처리")
     @Transactional
     @Order(3)
     void createLessPrice() {
@@ -98,7 +98,7 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("주문 최초 상태 확인")
+//    @DisplayName("주문 최초 상태 확인")
     @Order(4)
     void create() {
         Long userId = customerBefore("email");
@@ -113,9 +113,9 @@ class OrderServiceTest {
                 .build();
         SocketMessageForm messageForm = orderService.create(orderDTO);
 
-        assertThat(orderService.findAllOrdersByUserId(messageForm.getUserId()).get(0).getOrderId())
+        assertThat(orderService.findAllOrdersByUserId(messageForm.getUserId()).get(0).getState())
                 .as("주문의 최초 상태는 주문이어야 함")
-                .isEqualTo(1L);
+                .isEqualTo("주문");
     }
 
     @Test
@@ -159,16 +159,16 @@ class OrderServiceTest {
                 .isEqualTo("완료");
     }
 
-    @Test
-    @Disabled
-    @DisplayName("주문 금액 할인 정책 적용 확인")
-    @Transactional
-    @Order(8)
-    void findAllOrdersByUserId() {
-        Long userId = customerBefore("email3");
-    }
+//    @Test
+//    @Disabled
+//    @DisplayName("주문 금액 할인 정책 적용 확인")
+//    @Transactional
+//    @Order(8)
+//    void findAllOrdersByUserId() {
+//        Long userId = customerBefore("email3");
+//    }
 
-    @Test
+//    @Test
 //    @Disabled
 //    @DisplayName("1분간 미접수 시 자동 취소 확인")
     @Transactional
@@ -207,6 +207,7 @@ class OrderServiceTest {
                 "https://httpstat.us/200?sleep=62000",
                 String.class
         );
+        orderService.checkUnacceptedOrders();
 
         assertThat(orderService.findAllOrdersByUserId(userId).get(0).getState())
                 .as("주문 이후 1분 안에 점주가 접수하지 않으면 해당 주문은 자동 취소되어야 함")

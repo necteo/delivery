@@ -36,7 +36,7 @@ public class OrderService {
         executorService.scheduleAtFixedRate(this::checkUnacceptedOrders, 1, 1, TimeUnit.MINUTES);
     }
 
-    private void checkUnacceptedOrders(){
+    public void checkUnacceptedOrders(){
         LocalDateTime currentTime = LocalDateTime.now();
         List<Order> orders = new ArrayList<>();
         if (orderRepository.findAllByStatus(OrderStatus.ORDER).isPresent())
